@@ -45,7 +45,7 @@ function init() {
     map.setMaxBounds(mapBounds);
     map.fitBounds(mapBounds);
 
-    L.tileLayer('/assets/tiles/{z}/{x}/{y}.png', {
+    L.tileLayer('assets/tiles/{z}/{x}/{y}.png', {
         minZoom: mapMinZoom,
         maxZoom: mapMaxZoom,
         bounds: mapBounds,
