@@ -65,14 +65,21 @@ async function fetch_clans(map) {
     for (const [id, entry] of Object.entries(data)) {
         const x = entry.bases[0].x;
         const y = entry.bases[0].y;
+        const count = entry.bases[0].count;
         const name = entry.name;
-        L.marker(toLatLng(x, y)).addTo(map).bindPopup(name);
+        const marker = L.marker(toLatLng(x, y)).addTo(map).bindPopup(`${name}<br />Bauteile: ${count}`);
 
+        marker.on('mouseover',function(ev) {
+            marker.openPopup();
+        });
+
+        /*
         var myIcon = L.divIcon({
             html: name,
             className: 'clan-name-label'
         });
         L.marker(toLatLng(x, y), {icon: myIcon}).addTo(map);
+        */
     }
 }
 
