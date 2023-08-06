@@ -11,7 +11,6 @@ provider.refresh();
 app.use(express.static(publicDirPath));
 
 app.get('/api/clans', (req: Request, res: Response) => {
-    console.log("query");
     res.contentType('application/json');
     res.send(JSON.stringify(provider.getAllClanDetails()));
 });
