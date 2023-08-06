@@ -52,13 +52,6 @@ function init() {
         tms: false,
     }).addTo(map);
 
-
-    function onMapClick(e) {
-        alert("You clicked the map at " + e.latlng);
-    }
-    
-    map.on('click', onMapClick);
-
     return map;
 }
 
@@ -74,6 +67,12 @@ async function fetch_clans(map) {
         const y = entry.bases[0].y;
         const name = entry.name;
         L.marker(toLatLng(x, y)).addTo(map).bindPopup(name);
+
+        var myIcon = L.divIcon({
+            html: name,
+            className: 'clan-name-label'
+        });
+        L.marker(toLatLng(x, y), {icon: myIcon}).addTo(map);
     }
 }
 
