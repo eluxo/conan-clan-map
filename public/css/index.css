@@ -12,3 +12,14 @@
     text-align: center;
 }
 
+.base-red {
+    filter: hue-rotate(0deg);
+}
+
+.base-green {
+    filter: hue-rotate(120deg);
+}
+
+.base-blue {
+    filter: hue-rotate(-120deg);
+}
