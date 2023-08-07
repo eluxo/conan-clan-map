@@ -4,20 +4,6 @@ var rangeX = [ -296000, 412000 ]
 var rangeY = [ -292000, 353500 ]
 var boundsX = [ 14.4, 230.7 ]
 var boundsY = [ -47.7, -245.3 ]
-//var boundsX = [0, 250];
-//var boundsY = [0, 250];
-
-// 0 - 250
-/*
-	var a = 553000;
-	var b = -339900;
-	var c = 555000;
-	var d = -164605;
-*/
-var boundsX = [ 0.0, 250.0 ]
-var boundsY = [ 0.0, -250.0 ]
-var rangeX = [ -342036.0, 474460.0 ]
-var rangeY = [ -445357.0, 368713.0 ]
 
 function convertRange( value, r1, r2 ) {
     return (value - r1[0]) * (r2[1] - r2[0]) / (r1[1] - r1[0]) + r2[0]
@@ -79,14 +65,6 @@ async function fetch_clans(map) {
             .on('mouseover',function(ev) {
                 this.openPopup();
             });
-
-        /*
-        var myIcon = L.divIcon({
-            html: name,
-            className: 'clan-name-label'
-        });
-        L.marker(toLatLng(x, y), {icon: myIcon}).addTo(map);
-        */
     }
 }
 
