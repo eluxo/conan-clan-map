@@ -1,4 +1,4 @@
-import { map, Marker, Icon, Map } from 'leaflet';
+import { Marker, Icon, Map } from 'leaflet';
 import { ClanMapBackend, IMapInfo, IMapList } from './backend';
 import { IMapViewConfig, MapViewConfigFactory } from './mapviewconfig';
 
@@ -18,7 +18,7 @@ export class ClanMapInstance {
     constructor(info: IMapInfo) {
         this._info = info;
         this._config = MapViewConfigFactory.getConfig(this._info.type);
-        this._clanMap = map('map', this._config.getMapConfig());
+        this._clanMap = this._config.createMap();
         this._config.createLayer(this._clanMap);
     }
 

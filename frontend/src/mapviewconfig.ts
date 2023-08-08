@@ -1,11 +1,11 @@
-import { CRS, MapOptions, Map, LatLngBounds, TileLayer, LatLngExpression } from "leaflet";
+import { CRS, MapOptions, Map, LatLngBounds, TileLayer, LatLngExpression, map, LatLng, ImageOverlay, Marker, LatLngBoundsExpression } from "leaflet";
 import { MapType } from "./backend";
 
 /**
  * Provides the required configuration parameters for each of the maps.
  */
 export interface IMapViewConfig {
-    getMapConfig(): import("leaflet").MapOptions | undefined;
+    createMap(): Map;
     createLayer(clanMap: Map): void;
     /**
      * Converts a coordinate from the game coordinate system to the map
@@ -27,26 +27,11 @@ export class ExiledLandsConfig implements IMapViewConfig {
     private readonly _rangeY = [ -292000, 353500 ];
     private readonly _boundsX = [ 14.4, 230.7 ];
     private readonly _boundsY = [ -47.7, -245.3 ];
-
     
-    /**
-     * Converts one directional values coordinate using the given bounds.
-     * 
-     * @param value The value to be converted.
-     * @param r1 Map coordinate range.
-     * @param r2 Game coordinate range.
-     */
     private _convertRange(value: number, r1: number[], r2: number[]) {
         return (value - r1[0]) * (r2[1] - r2[0]) / (r1[1] - r1[0]) + r2[0]
     }
     
-    /**
-     * Converts a coordinate from the game coordinate system to the map
-     * coordinate system.
-     * 
-     * @param x The x coordinate.
-     * @param y The y coordinate.
-     */
     public toLatLng(x: number, y: number): LatLngExpression {
         return [
             this._convertRange(y, this._rangeY, this._boundsY),
@@ -54,30 +39,23 @@ export class ExiledLandsConfig implements IMapViewConfig {
         ]
     }
 
-    /**
-     * Getter for the map options.
-     */
-    public getMapConfig(): MapOptions {
-        return {
+    public createMap(): Map {
+        return map('map', {
             minZoom: this._minZoom,
             maxZoom: this._maxZoom,
             crs: CRS.Simple,
             attributionControl: false,
             zoomControl: false,
             maxBoundsViscosity: 1
-        }
+        });
     }
 
-    /**
-     * Create layer on the map.
-     * 
-     * @param map The map to create the layer on.
-     */
     public createLayer(clanMap: Map) {
         const mapBounds = new LatLngBounds(
             clanMap.unproject([0, 16128], this._maxZoom),
             clanMap.unproject([16128, 0], this._maxZoom)
         );
+        
     
         clanMap.setMaxBounds(mapBounds);
         clanMap.fitBounds(mapBounds);
@@ -92,7 +70,47 @@ export class ExiledLandsConfig implements IMapViewConfig {
 }
 
 
-export class SavageWildsConfig extends ExiledLandsConfig {
+/**
+ * Basic map configuration for savage wilds.
+ */
+export class SavageWildsConfig implements IMapViewConfig {
+    private _bounds = { south: 400000, west: -400000, north: -400000, east: 400000 }
+    private _minZoom = -8.7;
+    private _maxZoom = -4;
+
+    private _calculateBounds(): LatLngBoundsExpression {
+        const southWest: LatLng = new LatLng(this._bounds.south, this._bounds.west);
+        const northEast: LatLng = new LatLng(this._bounds.north, this._bounds.east);
+        return  new LatLngBounds(
+            southWest,
+            northEast
+        );
+    }
+
+    public createMap(): Map {
+        return map('map', {
+            crs: CRS.Simple,
+            attributionControl: false,
+            zoomControl: false,
+            maxBoundsViscosity: 1,
+            zoomSnap: 0.1,
+            zoomDelta: 0.1,
+            minZoom: this._minZoom,
+            maxZoom: this._maxZoom
+        });
+    }
+
+    createLayer(clanMap: Map): void {
+        const bounds = this._calculateBounds();
+        const overlay = new ImageOverlay('assets/maps/sw/map.jpg', bounds);
+        overlay.addTo(clanMap);
+        clanMap.fitBounds(bounds);
+        (new Marker(this.toLatLng(29058.916016, 222980.8125))).addTo(clanMap);
+    }
+
+    toLatLng(x: number, y: number): LatLngExpression {
+        return [-y, x];
+    }
 
 }
 
