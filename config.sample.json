@@ -1,0 +1,16 @@
+{
+    "port": 9000,
+    "databases": {
+        "server1": {
+            "name": "Server 1",
+            "file": "database/exiledlands.db",
+            "type": "exiled_lands"
+        },
+
+        "server2": {
+            "name": "Server 2",
+            "file": "database/savagewilds.db",
+            "type": "savage_wilds"
+        }
+    }
+}
