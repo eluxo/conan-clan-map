@@ -6,7 +6,7 @@ import fs from 'fs/promises';
 
 
 const app: Express = express();
-const publicDirPath = path.join(__dirname, '..', 'public');
+const publicDirPath = path.join(__dirname, '..', '..', 'public');
 
 
 app.use(express.static(publicDirPath));

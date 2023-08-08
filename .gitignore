@@ -7,3 +7,5 @@ game.db*
 /*/yarn-error.log
 /*/yarn.lock
 /*.code-workspace
+/public/js/index.js*
+
