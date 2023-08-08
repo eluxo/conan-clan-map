@@ -1,3 +1,5 @@
+const server = new ClanMapBackend();
+
 var mapMinZoom = 2
 var mapMaxZoom = 6
 var rangeX = [ -296000, 412000 ]
@@ -13,7 +15,8 @@ function toLatLng(x, y) {
     return [ convertRange(y, rangeY, boundsY), convertRange(x, rangeX, boundsX) ]
 }
 
-function init() {
+
+function initMap() {
     const map = L.map('map', {
         minZoom: 2,
         maxZoom: 6,
@@ -41,15 +44,8 @@ function init() {
     return map;
 }
 
-async function fetch_clans(map) {
-    const request = new Request('api/clans', {
-        method: "GET",
-    });
-
-    const response = await fetch(request);
-    const data = await response.json();
-    r = 0;
-    for (const [id, entry] of Object.entries(data)) {
+async function drawClanMarkers(map, clans) {
+    for (const [id, entry] of Object.entries(clans)) {
         const x = entry.bases[0].x;
         const y = entry.bases[0].y;
         const count = entry.bases[0].count;
@@ -68,10 +64,26 @@ async function fetch_clans(map) {
     }
 }
 
-async function load_map() {
-    const map = init();
-    await fetch_clans(map);
+async function loadMap(mapId) {
+    const map = initMap();
+    const clans = await server.getClanInfo(mapId);
+    drawClanMarkers(map, clans);    
 }
 
-load_map();
+async function loadSelectedMap() {
+    const mapId = location.hash.substring(1);
+    const maps = await server.getMapList();
+    const fallback = maps[0].id;
+
+    for (const entry of maps) {
+        if (mapId === entry.id) {
+            console.log(`loading map with id ${mapId}`);
+            return loadMap(mapId);
+        }
+    }
+
+    console.log(`loading fallback as ${fallback} instead of ${mapId}`);
+    return loadMap(fallback);
+}
+loadSelectedMap();
 

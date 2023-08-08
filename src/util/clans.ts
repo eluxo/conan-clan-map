@@ -1,5 +1,5 @@
-import { json } from 'express';
 import sqlite3 from 'sqlite3';
+import { TransformParser } from './coordinate';
 
 
 /**
@@ -22,31 +22,6 @@ export interface IClanDetails {
 }
 
 /**
- * FTransform representation.
- */
-interface IFTransform {
-    rotation: IFQuad;
-    translation: IFVector;
-    scale: IFVector;
-}
-
-/**
- * FVector representation.
- */
-interface IFVector {
-    x: number;
-    y: number;
-    z: number;
-}
-
-/**
- * FQuad representation.
- */
-interface IFQuad extends IFVector {
-    w: number;
-}
-
-/**
  * Interface for clan location provider class.
  * 
  * The class will provide a list of clans and their base locations.
@@ -62,7 +37,7 @@ export interface IClanLocationProvider {
     /**
      * Refresh the list of clan information.
      */
-    refresh(): Promise<boolean>;
+    refresh(db: sqlite3.Database): Promise<boolean>;
 }
 
 
@@ -80,11 +55,11 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
         return this._clans;
     }
 
-    refresh(): Promise<boolean> {
+    public async refresh(db: sqlite3.Database): Promise<boolean> {
+        const parser = new TransformParser();
         console.log("refreshing database")
         return new Promise<boolean>((resolve, reject) => {
             const clans: { [id: number]: IClanDetails } = {};
-            const db = new sqlite3.Database("./game.db");
             const query = `
             SELECT
                 g.guildId AS id,
@@ -98,7 +73,7 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
             console.log("read all clans")
             db.each(query, (err, row: any) => {
                 var clan = clans[row.id]
-                var transform = this._parseTransform(row.transform);
+                var transform = parser.parse(row.transform);
                 if (!clan) {
                     clan = {
                         id: row.id,
@@ -130,37 +105,11 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
                         element.bases[0].z /= element.bases[0].count;
                     }
                     this._clans = clans;
+                    resolve(true);
                 }
             })
         });        
     }
-
-    /**
-     * Parses the given object into a transformation.
-     * 
-     * This parses the transformation data as defined in the transform1 and
-     * transform2 fields in the database.
-     */
-    private _parseTransform(data: Buffer): IFTransform {
-        if (data.length != 40) throw new Error("Transformation has less than 40 bytes");
-        return {
-            rotation: {
-                w: data.readFloatLE(0),
-                x: data.readFloatLE(4),
-                y: data.readFloatLE(8),
-                z: data.readFloatLE(12)
-            },
-            translation: {
-                x: data.readFloatLE(16),
-                y: data.readFloatLE(20),
-                z: data.readFloatLE(24)
-            },
-            scale: {
-                x: data.readFloatLE(28),
-                y: data.readFloatLE(32),
-                z: data.readFloatLE(36)
-            }
-        }
-    }
 }
+
 
