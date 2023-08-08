@@ -1,0 +1,11 @@
+{
+  "name": "conan-clan-map-frontend",
+  "version": "1.0.0",
+  "main": "../public/js/index.js",
+  "author": "eluxo <code@eluxo.net>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.4.8",
+    "typescript": "^5.1.6"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "conan-clan-map",
   "version": "1.0.0",
-  "main": "bin/index.js",
+  "main": "../bin/index.js",
   "author": "eluxo <code@eluxo.net>",
   "license": "MIT",
   "scripts": {
