@@ -1,6 +1,8 @@
 import { Marker, Icon, Map } from 'leaflet';
 import { ClanMapBackend, IMapInfo, IMapList } from './backend';
 import { IMapViewConfig, MapViewConfigFactory } from './mapviewconfig';
+import { ServerMenu } from './servermenu';
+
 
 /**
  * A map showing our clan objects.
@@ -53,15 +55,20 @@ export class ClanMapInstance {
  */
 export class MapController {
     private readonly _maps: IMapList;
+    private _serverMenu?: ServerMenu;
 
     /**
      * Constrcutor.
      * 
      * @param maps List of the map object.
      */
-    constructor(maps: IMapList) {
+    constructor(maps: IMapList, serverMenu: HTMLElement | null) {
         console.log('create map controller for maps', maps);
         this._maps = maps;
+        if (serverMenu) {
+            this._serverMenu = new ServerMenu(serverMenu);
+            this._serverMenu.setMaps(maps);
+        }
     }
 
     /**
@@ -79,7 +86,8 @@ export class MapController {
      * 
      * @param mapId ID fo the map to be looked up.
      */
-    public getMapById(mapId: string): IMapInfo | undefined {
+    public getMapById(mapId?: string): IMapInfo | undefined {
+        if (!mapId) return undefined;
         for (var i = 0; i < this._maps.length; ++i) {
             if (this._maps[i].id === mapId) return this._maps[i];
         }
@@ -109,6 +117,7 @@ export class MapController {
      * @param info The info to create the map on.
      */
     public createMap(info: IMapInfo): ClanMapInstance {
+        this._serverMenu?.setActive(info);
         return new ClanMapInstance(info);
     }
 
@@ -118,7 +127,8 @@ export class MapController {
     public static async create(): Promise<MapController> {
         const backend = new ClanMapBackend();
         const maps = await backend.getMapList();
-        return new MapController(maps);
+        const serverMenu = document.getElementById("serverMenuArea");
+        return new MapController(maps, serverMenu);
     }
 }
 

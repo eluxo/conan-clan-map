@@ -1,7 +1,9 @@
 import { MapController } from "./map";
 
 MapController.create().then((controller: MapController) => {
-    const mapId = location.hash.substring(1);
+    const params = new URLSearchParams(window.location.search);
+    const mapId = params.get("map") || undefined;
+
     var mapInfo = controller.getMapById(mapId);
     if (!mapInfo) {
         mapInfo = controller.getMapByIndex(0);
