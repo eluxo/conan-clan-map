@@ -121,7 +121,11 @@ export class MapProvider {
     public async register(id: string, config: IMapConfigEntry) {
         console.log(`registering ${id}`);
         const map = new MapDetailsObject(id, config);
-        await map.update();
+        try {
+            await map.update();
+        } catch (err) {
+            console.log("Error: failed to create map", err)
+        }
         this._maps[id] = map;
         console.log(`registering ${id} done`);
     }
