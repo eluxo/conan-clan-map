@@ -13,12 +13,22 @@ export interface IBaseLocation {
 }
 
 /**
+ * Details on a single player.
+ */
+export interface IPlayerDetails {
+    name: string;
+    clanOwner: boolean;
+    id: number;
+}
+
+/**
  * Information on a clan.
  */
 export interface IClanDetails {
     id: number;
     name: string;
     bases: IBaseLocation[];
+    players: IPlayerDetails[];
 }
 
 /**
@@ -55,9 +65,44 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
         return this._clans;
     }
 
+    private async _readPlayers(db: sqlite3.Database): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            const query = `
+            SELECT
+                guild, id, char_name, id = owner AS owner
+            FROM characters
+                INNER JOIN guilds ON guild = guildId;
+            `;
+
+            console.log("read all players");
+            db.each(query, (err, row: any) => {
+                const clan = this._clans[row.guild];
+                if (!clan) return;
+                clan.players.push({
+                    id: row.id,
+                    clanOwner: row.owner,
+                    name: row.char_name
+                });
+            }, (err, n) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    }
+
     public async refresh(db: sqlite3.Database): Promise<boolean> {
+        console.log("refreshing database");
+
+        if (!await this._readGuilds(db)) return false;
+        if (!await this._readPlayers(db)) return false;
+        return true;
+    }
+
+    private async _readGuilds(db: sqlite3.Database): Promise<boolean> {
         const parser = new TransformParser();
-        console.log("refreshing database")
         return new Promise<boolean>((resolve, reject) => {
             const clans: { [id: number]: IClanDetails } = {};
             const query = `
@@ -83,7 +128,8 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
                             x: 0.0,
                             y: 0.0,
                             z: 0.0
-                        }]
+                        }],
+                        players: []
                     };
                     clans[row.id] = clan;
                 }
@@ -108,7 +154,7 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
                     resolve(true);
                 }
             })
-        });        
+        });
     }
 }
 

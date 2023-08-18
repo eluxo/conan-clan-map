@@ -1,5 +1,5 @@
 import { Marker, Icon, Map } from 'leaflet';
-import { ClanMapBackend, IMapInfo, IMapList } from './backend';
+import { ClanMapBackend, IClanInfo, IMapInfo, IMapList } from './backend';
 import { IMapViewConfig, MapViewConfigFactory } from './mapviewconfig';
 import { ServerMenu } from './servermenu';
 
@@ -29,6 +29,7 @@ export class ClanMapInstance {
      */
     async update() {
         const clans = await (new ClanMapBackend()).getClanInfo(this._info.id);
+        const $this = this;
         for (const [id, entry] of Object.entries(clans)) {
             const x = entry.bases[0].x;
             const y = entry.bases[0].y;
@@ -45,8 +46,49 @@ export class ClanMapInstance {
             pin.bindPopup(`${name}<br />Bauteile: ${count}`);
             pin.on('mouseover',function(ev) {
                 pin.openPopup();
+                $this.updateCard(entry);
             });
         }
+    }
+
+    /**
+     * Update the clan info card.
+     *
+     * @param entry The entry to be added to the clan info card.
+     */
+    public updateCard(entry: IClanInfo) {
+        const x = entry.bases[0].x;
+        const y = entry.bases[0].y;
+        const count = entry.bases[0].count;
+
+        const clanCard = document.getElementById("clanCard");
+        if (clanCard) clanCard.classList.remove("invisible");
+        this._setText("cardClanName", entry.name);
+        this._setText("clanPieces", `${count}`);
+        this._setText("clanX", `${x.toFixed(3)}`);
+        this._setText("clanY", `${y.toFixed(3)}`);
+        const clanMembers = document.getElementById("clanMembers");
+        if (clanMembers) {
+            clanMembers.innerHTML = '';
+            var first = true;
+            entry.players.forEach((player) => {
+                const entry = document.createElement("span");
+                if (first) {
+                    first = false;
+                    entry.innerText = player.name;
+                } else {
+                    entry.innerText = `, ${player.name}`;
+                }
+                if (player.clanOwner) entry.style.textDecoration = "underline";
+                clanMembers.appendChild(entry);
+            });
+        }
+    }
+
+    private _setText(id: string, text: string) {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.innerText = text;
     }
 }
 

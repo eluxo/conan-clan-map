@@ -7,8 +7,21 @@ export interface IMapInfo {
 export type IMapList = IMapInfo[];
 
 
-export interface IClanInfo {
+export interface IBaseInfo {
+    x: number;
+    y: number;
+    count: number;
+}
 
+export interface IPlayerInfo {
+    name: string;
+    clanOwner: boolean;
+}
+
+export interface IClanInfo {
+    name: string;
+    bases: IBaseInfo[];
+    players: IPlayerInfo[];
 }
 
 /**
