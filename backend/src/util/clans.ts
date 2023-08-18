@@ -51,6 +51,18 @@ export interface IClanLocationProvider {
 }
 
 
+type ClanDataCollection = { [id: number]: IClanDetails };
+
+
+// TODO: add clustering option based on some sane clustering algorithm
+// instead of just using the mean of all base locations.
+//
+// Options might be:
+//   - DBSCAN
+//   - HDBSCAN
+//   - OPTICS
+
+
 /**
  * This class just collects all building pieces owned by a clan and calculates
  * the mean of all elements as a center.
@@ -59,14 +71,27 @@ export interface IClanLocationProvider {
  * base, but it should do for now.
  */
 export class NaiveClanLocationProvider implements IClanLocationProvider {
-    private _clans: { [id: number]: IClanDetails } = { };
+    private _clans: ClanDataCollection = { };
 
     getAllClanDetails(): { [id: number]: IClanDetails } {
         return this._clans;
     }
 
-    private async _readPlayers(db: sqlite3.Database): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
+    public async refresh(db: sqlite3.Database): Promise<boolean> {
+        console.log("refreshing database");
+
+        try {
+            const clans = await this._readGuilds(db);
+            this._clans = await this._readPlayers(db, clans);
+            return true;
+        } catch (err) {
+            console.log("Error reading database: ", err);
+        }
+        return false;
+    }
+
+    private async _readPlayers(db: sqlite3.Database, clans: ClanDataCollection): Promise<ClanDataCollection> {
+        return new Promise<ClanDataCollection>((resolve, reject) => {
             const query = `
             SELECT
                 guild, id, char_name, id = owner AS owner
@@ -76,7 +101,7 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
 
             console.log("read all players");
             db.each(query, (err, row: any) => {
-                const clan = this._clans[row.guild];
+                const clan = clans[row.guild];
                 if (!clan) return;
                 clan.players.push({
                     id: row.id,
@@ -87,23 +112,16 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(true);
+                    console.log(`${n} players found.`);
+                    resolve(clans);
                 }
             });
         });
     }
 
-    public async refresh(db: sqlite3.Database): Promise<boolean> {
-        console.log("refreshing database");
-
-        if (!await this._readGuilds(db)) return false;
-        if (!await this._readPlayers(db)) return false;
-        return true;
-    }
-
-    private async _readGuilds(db: sqlite3.Database): Promise<boolean> {
+    private async _readGuilds(db: sqlite3.Database): Promise<ClanDataCollection> {
         const parser = new TransformParser();
-        return new Promise<boolean>((resolve, reject) => {
+        return new Promise<ClanDataCollection>((resolve, reject) => {
             const clans: { [id: number]: IClanDetails } = {};
             const query = `
             SELECT
@@ -150,8 +168,7 @@ export class NaiveClanLocationProvider implements IClanLocationProvider {
                         element.bases[0].y /= element.bases[0].count;
                         element.bases[0].z /= element.bases[0].count;
                     }
-                    this._clans = clans;
-                    resolve(true);
+                    resolve(clans);
                 }
             })
         });

@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import fs, { FSWatcher } from 'fs';
 import { IMapConfigEntry } from '../config';
 import { IClanLocationProvider, NaiveClanLocationProvider } from "./clans";
 
@@ -10,6 +11,9 @@ export class MapDetailsObject {
     private readonly _database: string;
     private readonly _id: string;
     private readonly _type: 'exiled_lands' | 'savage_wilds';
+    private _watcher?: FSWatcher;
+    private _timeout?: NodeJS.Timeout;
+    
     private _clanLocationProvider: IClanLocationProvider;
 
     /**
@@ -52,8 +56,16 @@ export class MapDetailsObject {
      * is up to date.
      */
     public async update(): Promise<void> {
+        console.log(`reading ${this._database}`);
+
         const db = new sqlite3.Database(this._database);
         await this._clanLocationProvider.refresh(db);
+
+        if (!this._watcher) {
+            console.log(`regiser file watcher on ${this._database}`);
+            this._watcher = fs.watch(this._database, this._onDbChangedEvent.bind(this));
+        }
+
         return new Promise<void>((resolve, reject) => {
             db.close((err) => {
                 if (err) {
@@ -64,6 +76,26 @@ export class MapDetailsObject {
             });
         });
     }
+
+    /**
+     * Called whenever the database file has changed.
+     */
+    private async _onDbChangedEvent() {
+        if (this._timeout) {
+            clearTimeout(this._timeout);
+        } else {
+            console.log(`schedule refresh of ${this._database}`);
+        }
+        this._timeout = setTimeout(async () => {
+            try {
+                await this.update();
+            } catch (err) {
+                console.log("failed to update data", err);
+            }    
+            this._timeout = undefined;
+        }, 5000);
+    }
+    
 }
 
 /**
